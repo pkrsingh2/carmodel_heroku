@@ -5,6 +5,13 @@ import pickle
 
 import pandas as pd
 
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import load_img,img_to_array
+from tensorflow.python.keras import utils
+
+from tensorflow.keras.applications.vgg16 import VGG16
+from tensorflow.keras.layers import Dense, Dropout, Flatten, Input, GlobalMaxPool2D
+from tensorflow.keras.models import Model
 
 current_path = os.getcwd()
 
