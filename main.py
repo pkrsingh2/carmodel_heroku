@@ -5,10 +5,6 @@
 
 import streamlit as st
 import os
-import matplotlib.pyplot as plt
-import seaborn as sns
-sns.set_theme(style="darkgrid")
-sns.set()
 
 
 from PIL import Image
