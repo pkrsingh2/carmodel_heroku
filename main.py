@@ -3,7 +3,6 @@
 
 # In[ ]:
 
-from tkinter.ttk import Style
 import streamlit as st
 import os
 import matplotlib.pyplot as plt
