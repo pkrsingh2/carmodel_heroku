@@ -2,4 +2,4 @@ numpy==1.23.0
 pandas==1.4.3
 streamlit==1.10.0
 tensorflow-cpu
-keras == 2.4.3
+keras == 2.10.0
