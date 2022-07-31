@@ -7,8 +7,9 @@ import os
 import numpy as np
 import pandas as pd
 from PIL import Image
-import cv2
+#import cv2
 import tensorflow as tf
+from PIL import ImageDraw as D
 
 
 # from tensorflow.keras.applications.vgg16 import VGG16
@@ -58,10 +59,17 @@ def predictor(image):
     pBox[2] = min(pBox[2],w)
     pBox[3] = min(pBox[3],h)
     
-    img_tmp = np.array(img_original)
-    cv2.rectangle(img_tmp,pBox[:2],pBox[2:],(0,0,255),2)
-    img_final = tkpi.array_to_img(img_tmp)
+    # img_tmp = np.array(img_original)
+    # cv2.rectangle(img_tmp,pBox[:2],pBox[2:],(0,0,255),2)
+    # img_final = tkpi.array_to_img(img_tmp)
 
-    return df, img_final
+    #Alternate solution to add bounding box
+    i = Image.open(image)
+    draw = D.Draw(i)
+    draw.rectangle([(pBox[0],pBox[1]),(pBox[2],pBox[3])], outline="red")
+    #i.show()
+
+    #return df, img_final
+    return df, i
 
 
