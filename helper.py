@@ -14,7 +14,7 @@ from PIL import ImageDraw as D
 
 # from tensorflow.keras.applications.vgg16 import VGG16
 # from tensorflow.keras.applications.vgg19 import VGG19
-# from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
 # from tensorflow.keras.applications.inception_v3 import InceptionV3
 from tensorflow.keras.applications.resnet_v2 import ResNet50V2
 # from tensorflow.keras.applications.efficientnet_v2 import EfficientNetV2S
@@ -24,7 +24,7 @@ from tensorflow.keras.applications.resnet_v2 import ResNet50V2
 
 
 
-modelName = "ResNet50V2_FINAL"
+modelName = "MobileNetV2"
 fname = os.path.join('.',"static","%s_attrib.gl"%modelName)   
 
 with open(fname, 'rb') as fh:
@@ -32,7 +32,7 @@ with open(fname, 'rb') as fh:
 weights = os.path.join('.',"static","%s_weights.h5"%modelName)
 inputShape = attributes.get('inputShape')
 
-model = attributes.get('modelFunc')(input_size=inputShape,application=ResNet50V2)
+model = attributes.get('modelFunc')(input_size=inputShape,application=MobileNetV2)
 model.load_weights(weights)
 
 tkpi = tf.keras.preprocessing.image
