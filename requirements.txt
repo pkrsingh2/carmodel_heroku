@@ -2,4 +2,4 @@ numpy==1.23.0
 pandas==1.4.3
 streamlit==1.10.0
 tensorflow-cpu
-opencv-python-headless==4.2.0.32
+opencv-python-headless==4.6. 0.66
