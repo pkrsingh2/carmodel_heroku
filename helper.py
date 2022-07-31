@@ -1,92 +1,67 @@
-# import cv2
+#!/usr/bin/env python
+# coding: utf-8
+
+
+import pickle
 import os
 import numpy as np
-import pickle
-
 import pandas as pd
-
+from PIL import Image
+import cv2
 import tensorflow as tf
-from tensorflow.keras.preprocessing.image import load_img,img_to_array
-from tensorflow.python.keras import utils
-
-from tensorflow.keras.applications.vgg16 import VGG16
-from tensorflow.keras.layers import Dense, Dropout, Flatten, Input, GlobalMaxPool2D
-from tensorflow.keras.models import Model
-
-current_path = os.getcwd()
-
-#let's create the number of unique labels we have available in our dataset
 
 
-car_category_path = os.path.join(current_path, 'static/car_category.pickle')
-
-def VGGModel(input_size):
-    #layers
-    vgg = VGG16(input_shape=input_size[1:],include_top=False,weights='imagenet')
-    pool = GlobalMaxPool2D()(vgg.output)
-    cls = Dense(196,activation='softmax',name="names")(pool)
-    box = Dense(4,activation='relu',name="boxes")(pool)    
-    # model assembly
-    model = Model(inputs=vgg.inputs,outputs=[cls,box])
-    return model
-
-#predictor_model = load_model(r'static/car_brand_clf_resnet50.h5')
-#predictor_model = load_model(r'static/car_brand_clf_resnet50.h5')
-predictor_model = VGGModel(input_size=(None,128,128,3))
-predictor_model.load_weights(r'static/VGGModel_2.h5')
-
-with open(car_category_path, 'rb') as handle:
-    car_types = pickle.load(handle)
-
-from keras.applications.resnet_v2 import ResNet50V2 , preprocess_input as resnet_preprocess
-from keras.applications.densenet import DenseNet121, preprocess_input as densenet_preprocess
-from keras.layers import concatenate
-from keras.layers import BatchNormalization, Dense, GlobalAveragePooling2D, Lambda, Dropout, InputLayer, Input
-from keras.models import Model
-
-#input_shape = (224,224,3)
-#input_shape = (128,128,3)
-#input_layer = Input(shape=input_shape)
+# from tensorflow.keras.applications.vgg16 import VGG16
+# from tensorflow.keras.applications.vgg19 import VGG19
+# from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+# from tensorflow.keras.applications.inception_v3 import InceptionV3
+from tensorflow.keras.applications.resnet_v2 import ResNet50V2
+# from tensorflow.keras.applications.efficientnet_v2 import EfficientNetV2S
+# from tensorflow.keras.applications.densenet import DenseNet201
+# from tensorflow.keras.applications.nasnet import NASNetMobile
 
 
-#first extractor inception_resnet
-#preprocessor_resnet = Lambda(resnet_preprocess)(input_layer)
-#inception_resnet = ResNet50V2(weights = 'imagenet',
-#                                     include_top = False,input_shape = input_shape,pooling ='avg')(preprocessor_resnet)
-
-#preprocessor_densenet = Lambda(densenet_preprocess)(input_layer)
-#densenet = DenseNet121(weights = 'imagenet',
-#                                     include_top = False,input_shape = input_shape,pooling ='avg')(preprocessor_densenet)
 
 
-#merge = concatenate([inception_resnet,densenet])
-#feature_extractor = Model(inputs = input_layer, outputs = predictor_model)
-#model = Model(inputs = input_layer, outputs = merge)
-#model.save('feature_extractor.h5')
+modelName = "ResNet50V2_FINAL"
+fname = os.path.join('.',"static","%s_attrib.gl"%modelName)   
 
-#predictor_model = load_model(r'static/feature_extractor.h5')
+with open(fname, 'rb') as fh:
+    attributes = pickle.load(fh)
+weights = os.path.join('.',"static","%s_weights.h5"%modelName)
+inputShape = attributes.get('inputShape')
 
-#def decode
+model = attributes.get('modelFunc')(input_size=inputShape,application=ResNet50V2)
+model.load_weights(weights)
 
-print('\nmodel loaded')
-def predictor(img_path): # here image is file name 
-    img = load_img(img_path, target_size=(128,128))
-    img = img_to_array(img)
-    img = np.expand_dims(img, axis=0)
-    print("here, I am\n")
-    print(img.shape)
-    #features = feature_extractor.predict(img)
-    #prediction = predictor_model.predict(features)*100
-    prediction = predictor_model.predict(img)
-    print("Here again\n")
-    top_5 = sorted(prediction[0][0])[:5]
-    print(top_5)
-    print('\n')
+tkpi = tf.keras.preprocessing.image
 
-    prediction = pd.DataFrame(data=top_5, columns=['car_types'])
+def predictor(image):
+    
+    (w,h) = Image.open(image).size
+    img_original = Image.open(image)
+    img = np.expand_dims(np.array(img_original.copy().resize(inputShape[1:3])),axis=0)/255.0
+    
+    result = model.predict(img)
+    enc = attributes['labelEncoder']    
 
-    #prediction.columns = ['values']
-    #prediction  = prediction.nlargest(5, 'values')
-    #prediction = prediction.reset_index()
-    #prediction.columns = ['name', 'values']
-    return(prediction)
+    clsProba = np.round((result[0]*100),2)
+
+    sortPos = np.argsort(clsProba)
+    df = pd.DataFrame(np.array(list(zip(enc.classes_[sortPos][0],
+                               clsProba[0][sortPos][0][::-1])))[:5],
+                          columns=["names","confidence"])
+
+    pBox = np.multiply(np.append((w,h),(w,h)),result[1][0]).astype(int)
+    pBox[0] = max(pBox[0],0)
+    pBox[1] = max(pBox[1],0)
+    pBox[2] = min(pBox[2],w)
+    pBox[3] = min(pBox[3],h)
+    
+    img_tmp = np.array(img_original)
+    cv2.rectangle(img_tmp,pBox[:2],pBox[2:],(0,0,255),2)
+    img_final = tkpi.array_to_img(img_tmp)
+
+    return df, img_final
+
+
