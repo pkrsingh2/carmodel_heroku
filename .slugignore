@@ -1,0 +1,2 @@
+#This is slugignore file to help resolve error of slug size on heroku
+*.h5
